@@ -2,15 +2,31 @@ import os
 import subprocess
 from playwright.sync_api import sync_playwright
 import time
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
-def open_browser(i):
-    command = [
-            "open", "-na", "Google Chrome", "--args", "--profile-directory=" + f"Profile {i}"
-        ]
-    subprocess.run(command, check=True)
+def accept_form(driver):
+    time.sleep(5)
+    try:
+        decline_button = WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located((By.XPATH, '//*[@id="declineButton"]'))
+        )
+        decline_button.click()
+        print("Clicked 'declineButton'")
+    except Exception as e:
+        print(f"Error clicking 'declineButton': {e}")
 
-def accept_form():
-    pass
+    try:
+        ack_button = WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located((By.XPATH, '//*[@id="ackButton"]'))
+        )
+        ack_button.click()
+        print("Clicked 'ackButton'")
+    except Exception as e:
+        print(f"Error clicking 'ackButton': {e}")
 
 def add_extension():
     pass
@@ -21,33 +37,55 @@ def question_prompts():
 def close():
     pass
 
-def ask(i, questions):
-    with sync_playwright() as p:
-        browser = p.chromium.launch_persistent_context(
-            user_data_dir=f"/Users/alexanderciechonski/Library/Application Support/Google/Chrome/Profile {i+3}",  
-            headless=False 
-        )
-        
-        if browser.pages:
-            page = browser.pages[0]  # Use the first page if it exists
-        else:
-            page = browser.new_page()  # Create a new page if no pages exist
+def ask():
+    chrome_options = Options()
+    chrome_options.add_argument('--user-data-dir=/Users/alexanderciechonski/Library/Application Support/Google/Chrome/Profile 3')
+    chrome_options.add_argument('--profile-directory=Profile 3')
+    chrome_options.add_argument("--start-maximized")
+    chrome_options.add_argument("--disable-infobars")
+    driver = webdriver.Chrome(options=chrome_options)
+    driver.get("chrome://version/")
+    time.sleep(100)
 
-        # Navigate and interact with the page
-        page.goto("https://www.google.com")
-        print("Navigated to Google")
-        # browser = p.chromium.launch(headless=False)  
-        # page = browser.new_page()
-        # add_extension()
-        # question_prompts()
-        time.sleep(5)
-        browser.close()
+def open_browser(i):
+    try:
+        kill = [
+            "pkill", "-9", "chrome"
+        ]
+        subprocess.run(kill, check=True)
+    except subprocess.CalledProcessError:
+        print("No Chrome processes were running.")
+
+    command = [
+        "open", "-na", "Google Chrome", "--args", 
+        '--no-first-run',
+        '--no-default-browser-check',
+        f"--profile-directory=Profile {i}",
+        "--remote-debugging-port=9222"
+    ]
+    subprocess.run(command, check=True)
+
+def connect_browser(extension_path):
+    print('browser launched')
+    time.sleep(10)
+    chrome_options = Options()
+    chrome_options.add_extension(extension_path)
+    chrome_options.add_experimental_option("debuggerAddress", "localhost:9222")
+    driver = webdriver.Chrome(options=chrome_options)
+
+    print('connected')
+    driver.get("https://www.ucl.ac.uk/isd/services/learning-teaching/moodle")
+    time.sleep(2)
+    driver.quit()
+    return driver
 
 
 def main():
-    with open('questions.txt', 'r') as f:
-        questions = [line.strip() for line in f]
+    extension_path = "/Users/alexanderciechonski/Library/Application Support/Google/Chrome/Default/Extensions/hlgbcneanomplepojfcnclggenpcoldo/1.0.21_0.crx"
+    open_browser(50)
+    driver = connect_browser(extension_path)
+    # accept_form(driver)
 
-    # for i in range(30):
-    #     ask(i, questions)
-    ask(1, questions)
+
+if __name__ == "__main__":
+    ask()
