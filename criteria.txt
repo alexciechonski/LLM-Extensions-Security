@@ -1,0 +1,9 @@
+Data not related to the prompt going to the extension’s server
+The prompt going to some other server
+Servers of other companies (Facebook, Twitter, Microsoft etc.)
+All obfuscated/encrypted requests
+Fingerprinting (browser details)
+Website replay
+Pixel tracking 
+HTTP instead of HTTPS
+Periodic requests

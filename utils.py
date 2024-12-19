@@ -1,8 +1,10 @@
 import os
 import subprocess
+import json
+from mitmproxy.io import FlowReader
+from mitmproxy.http import HTTPFlow
 
 def combine_flows(folder_path, output_file):
-    # try in tiemstamp order
     if not os.path.exists(folder_path):
         print(f"Error: The folder '{folder_path}' does not exist.")
 
@@ -22,10 +24,22 @@ def combine_flows(folder_path, output_file):
     except subprocess.CalledProcessError as e:
         print(f"Error combining flows: {e}")
 
-def subtract_flows(file1, file2, output_file):
-    pass
+def flow2json(input_path, output_path):
+    items = []
+    with open(input_path, "rb") as logfile:
+        freader = flow.FlowReader(logfile)
+        try:
+            for f in freader.stream():
+                items.append( f )
+        except Exception as e:
+            print("Flow file corrupted: {}".format(e))
+    return items
 
 
 if __name__ == "__main__":
-    print('running...')
-    combine_flows('old_tests', 'combined2.flow')
+    import json
+    with open('harpa.flow', "rb") as file:
+            reader = FlowReader(file)
+
+    for flow in reader.stream():
+        print(flow)

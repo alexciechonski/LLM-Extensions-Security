@@ -7,6 +7,10 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import undetected_chromedriver as uc
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 def accept_form(driver):
     time.sleep(5)
@@ -39,13 +43,17 @@ def close():
 
 def ask():
     chrome_options = Options()
-    chrome_options.add_argument('--user-data-dir=/Users/alexanderciechonski/Library/Application Support/Google/Chrome/Profile 3')
-    chrome_options.add_argument('--profile-directory=Profile 3')
+    chrome_options.add_argument('--user-data-dir=/Users/alexanderciechonski/Library/Application Support/Google/Chrome/Profile 5')
+    chrome_options.add_argument('--profile-directory=Profile 5')
     chrome_options.add_argument("--start-maximized")
     chrome_options.add_argument("--disable-infobars")
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    chrome_options.add_experimental_option("useAutomationExtension", False)
+    chrome_options.add_extension("/Users/alexanderciechonski/Library/Application Support/Google/Chrome/Default/Extensions/hlgbcneanomplepojfcnclggenpcoldo/1.0.21_0.crx")
     driver = webdriver.Chrome(options=chrome_options)
-    driver.get("chrome://version/")
-    time.sleep(100)
+    time.sleep(1)
+    driver.get("chrome-extension://hlgbcneanomplepojfcnclggenpcoldo/index.html")
+    time.sleep(20)
 
 def open_browser(i):
     try:

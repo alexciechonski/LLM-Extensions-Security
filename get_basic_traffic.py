@@ -24,8 +24,8 @@ def close_chrome():
 
 def mitm(output_file):
     mitmweb_command = [
-        "mitmproxy",
-        "--save-stream-file", output_file
+        "mitmweb",
+        "--save-stream-file", output_file,
     ]
     mitmweb_process = subprocess.Popen(mitmweb_command)
     return mitmweb_process
@@ -46,5 +46,5 @@ if __name__ == "__main__":
     # for i in range(30):
     #     output_file_path = f"basic_tests/test{i+1}.flow"  # Change this to your desired file path
     #     automate(output_file_path, i)
-    automate("basic_tests/test.flow", 31)
+    automate("basic_tests/new.flow", 5)
 
