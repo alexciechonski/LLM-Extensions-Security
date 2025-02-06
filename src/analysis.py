@@ -27,7 +27,7 @@ from collections import defaultdict
 
 
 class networkAnalyzer:
-    def __init__(self, csv_path, output_file_path) -> None:
+    def __init__(self, csv_path, output_file_path, extension) -> None:
         self.network = pd.read_csv(csv_path)
         self.output_file_path = output_file_path
         self.files = self.get_files()
@@ -52,6 +52,7 @@ class networkAnalyzer:
         """
         self.struct = defaultdict(set)
         self.res = {{file: self.struct} for file in self.files}
+        self.extension = extension
 
     def get_files(self) -> list:
         files = set(self.network['filename'].tolist())
