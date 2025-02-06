@@ -1,1 +1,12 @@
 venv/
+basic_tests/
+old_tests/
+perplexity_tests/
+ChatsNow/
+Copilot/
+flow_csvs/
+Harpa/
+MaxAI/
+resources/
+unused/
+test.py
