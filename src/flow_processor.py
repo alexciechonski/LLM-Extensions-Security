@@ -6,10 +6,9 @@ from mitmproxy.websocket import WebSocketMessage
 import pandas as pd
 
 class FlowProcessor:
-    def __init__(self, extension_name, flow_directory, output_csv, disconnect_json):
+    def __init__(self, extension_name, flow_directory, disconnect_json):
         self.extension_name = extension_name
         self.flow_directory = flow_directory
-        self.output_csv = output_csv
         self.disconnect_json = disconnect_json
         self.disconnect_mapping_file = "disconnect_mapping.json"
         self.headers_list = ["req_header_cookie", "res_header_cookie", "req_header_set-cookie", "res_header_set-cookie"]

@@ -10,3 +10,4 @@ MaxAI/
 resources/
 unused/
 test.py
+__pycache__/

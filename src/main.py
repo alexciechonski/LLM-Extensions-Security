@@ -10,7 +10,11 @@ def main():
         disconnect_json="src/disconnect.json"
     )
     df = processor.process_flows("Copilot/copilot-lin-control.flow")
-    print(df == pd.read_csv("src/copilot.csv"))
+    df.to_csv('src/copilot-control.csv')
+    # old = pd.read_csv("src/copilot.csv")
+    # for col in df.columns:
+    #     if set(df[col]) != set(old[col]):
+    #         print(col)
 
 
 if __name__ == "__main__":
