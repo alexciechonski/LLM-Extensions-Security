@@ -1,7 +1,9 @@
 import pandas as pd    
 from collections import defaultdict
 from flow_processor import FlowProcessor
+import json
 from mitmproxy.io import FlowReader
+from mitmproxy.http import HTTPFlow
 
 """
 {'Max.AI-lin-search-new.flow', 'Max.AI-Lin-Summarize.flow', 'Max.AI-Lin-Browse.flow'}
@@ -29,11 +31,6 @@ from mitmproxy.io import FlowReader
 
 
 class networkAnalyzer():
-    # def __init__(self, extension_name, flow_directory, disconnect_json):
-    #     super().__init__(extension_name, flow_directory, disconnect_json)
-    #     self.network = self.get_dataframe()
-
-
     def __init__(self, network, flow_file, extension) -> None:
         self.network = network
         """
@@ -78,7 +75,6 @@ class networkAnalyzer():
                         res.append(referer_header)
         return res
         
-
     def remove_noise(self, domains: set):
         res = []
         for domain in domains:
@@ -94,7 +90,7 @@ class networkAnalyzer():
         domains = set(df['request_domain'].tolist())
         return self.remove_noise(domains)
 
-    def get_leaks(self, endpoint) -> dict:
+    def get_leaks(self, payloads) -> dict:
         """
         returns:
         {
@@ -104,95 +100,80 @@ class networkAnalyzer():
             ...
         }
         """
-        res = defaultdict(bool)
-        print(res)
-        with open(self.flow_file, "rb") as file:
-            reader = FlowReader(file)            
-            for flow in reader.stream():
-                if not hasattr(flow, "request") or not flow.request:
-                    continue
-            
-            # page url
-            # harpa: url
-            # check current url and check vals
+        pass
 
-            # page_content 
-            # harpa: title
-            # get html and compare
+    # def get_payloads(self, endpoint):
+    #     payloads = []
+    #     try:
+    #         with open(self.flow_file, "rb") as f:
+    #             reader = FlowReader(f)
+    #             for flow in reader.stream():
+    #                 if not isinstance(flow, HTTPFlow):
+    #                     continue
 
-            # prompt: 
-            # harpa messages[i]['user']
-            # "scrape prompt" and compare
+    #                 if endpoint not in flow.request.url:
+    #                     continue
 
-            # user details
+    #                 try:
+    #                     request_data = json.loads(flow.request.content.decode('utf-8'))
+    #                     payloads.append(request_data)
+    #                 except (json.JSONDecodeError, UnicodeDecodeError):
+    #                     pass
+    #     except Exception as e:
+    #         print(e)
+    #     return payloads
 
-            # device details
-
-            # time of query
-
-            # context text
-            # harpa: messages[0]
-
-            # chat history
-            # harpa: messages
-
-            # conversation id
-            # harpa: space_id
-
-            # user-agent
-            # obv
-
-            # cookies
-            # obv
-            # what cookie means?
-
-
-            """
-            solutions:
-                1. use a llm
-                    - how to get it to be fast?
-                        - scrapegraph
-                    - cost of api keys?
-                    - cost of server?
-                    - not local
-                2. "scrape" all data and compare
-                    - scraping prompt is difficult
-                        - maybe hybrid solution (?)
-                    - ethics?
-                    - difficult
-                3. keywords
-                    - can be used as part of the hybrid soluton 
-                4. create a simple ml model
-                    - might be too hard
-            """
-
-
-
-
-
-            
-        
-
-
-    def update_res(self, endpoints: list[str]):
+    def get_summary(self, endpoints: list[str]):
+        all_payloads = []
         for url in endpoints:
-            leaks = self.get_leaks(url)
-            for leak_type, val in leaks.items():
-                if val == 1:
-                    self.res[leak_type].add(url)
+            all_payloads.append(self.get_payloads(url))
+        return self.get_leaks()
 
     def run(self):
         first_parties = self.get_party('first')
-        self.update_res(first_parties)
+        fp_summary = self.get_summary(first_parties)
 
         third_parties = self.get_party('third')
-        self.update_res(third_parties)
+        tp_summary = self.get_summary(third_parties)
+
+        return {
+            'first-party':fp_summary,
+            'third-party': tp_summary
+        }
+
+    def get_all_payloads(self, endpoint):
+        request_payloads = []
+        try:
+            with open(self.flow_file, "rb") as f:
+                reader = FlowReader(f)
+                
+                for flow in reader.stream():
+                    if not isinstance(flow, HTTPFlow):
+                        continue
+
+                    if endpoint not in flow.request.url:
+                        continue
+
+                    try:
+                        request_data = json.loads(flow.request.content.decode('utf-8'))
+                        request_payloads.append(request_data)
+                    except (json.JSONDecodeError, UnicodeDecodeError):
+                        pass
+
+        except Exception as e:
+            print(f"Error processing flow file: {e}")
+
+        print(len(request_payloads))
+
+        return request_payloads
 
 
 def main():
-    df = pd.read_csv('src/copilot-control.csv')
-    na = networkAnalyzer(df, 'Copilot/copilot-lin-control.flow',"copilot")
-    print(na.get_leaks(''))
+    df = pd.read_csv('src/harpa.csv')
+    na = networkAnalyzer(df, 'Harpa/harpa-lin-search-new.flow', "Harpa")
+    all_payloads = na.get_all_payloads("api.harpa.ai/api/v1/ai/")
+    # with open('all_payloads.json', 'w') as f:
+    #     json.dump(all_payloads, f, indent=2)
 
 if __name__ == "__main__":
    main()

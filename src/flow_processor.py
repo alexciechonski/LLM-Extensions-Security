@@ -6,7 +6,7 @@ from mitmproxy.websocket import WebSocketMessage
 import pandas as pd
 
 class FlowProcessor:
-    def __init__(self, extension_name, flow_directory, disconnect_json):
+    def __init__(self, extension_name, flow_directory, output_csv, disconnect_json):
         self.extension_name = extension_name
         self.flow_directory = flow_directory
         self.disconnect_json = disconnect_json
@@ -15,6 +15,7 @@ class FlowProcessor:
         self.categories_of_interest = ["Advertising", "Analytics", "FingerprintingInvasive", "FingerprintingGeneral", "Social"]
         self.output_rows = []
         self.disconnect_mapping = self.load_disconnect_mapping()
+        self.output_csv = output_csv
 
     def load_disconnect_mapping(self):
         if os.path.exists(self.disconnect_mapping_file):
@@ -147,28 +148,28 @@ class FlowProcessor:
 
         return pd.DataFrame(self.output_rows, columns=fieldnames)
 
-    # def write_to_csv(self):
-    #     fieldnames = [
-    #         "extension", "filename", "timestamp", "context", "disconnect_category",
-    #         "contacted_party", "request_domain", "request_url", "method", "status",
-    #         "response", "payload", "size", "cookies"
-    #     ] + self.headers_list
+    def write_to_csv(self):
+        fieldnames = [
+            "extension", "filename", "timestamp", "context", "disconnect_category",
+            "contacted_party", "request_domain", "request_url", "method", "status",
+            "response", "payload", "size", "cookies"
+        ] + self.headers_list
 
-    #     with open(self.output_csv, "w", newline="", encoding="utf-8") as csvfile:
-    #         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-    #         writer.writeheader()
-    #         writer.writerows(self.output_rows)
+        with open(self.output_csv, "w", newline="", encoding="utf-8") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(self.output_rows)
 
     def process_flows(self, file_path):
         self.parse_flow_file(file_path)
-        # self.write_to_csv()
-        return self.get_dataframe()
+        self.write_to_csv()
+        # return self.get_dataframe()
 
 if __name__ == "__main__":
     processor = FlowProcessor(
-        extension_name="copilot",
-        flow_directory="Copilot",
-        output_csv="src/copilot.csv",
+        extension_name="harpa",
+        flow_directory="Harpa",
+        output_csv="src/harpa.csv",
         disconnect_json="src/disconnect.json"
     )
-    print(processor.process_flows("Copilot/copilot-lin-control.flow"))
+    processor.process_flows("Harpa/harpa-lin-search-new.flow")
