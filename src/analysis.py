@@ -44,31 +44,52 @@ class NetworkAnalyzer():
             (df['contacted_party'] == f'{party}-party')
         ]
         domains = set(df['request_domain'].tolist())
-        return self.remove_noise(domains)
+        if party == 'third':
+            return self.remove_noise(domains)
+        return domains
+
+    @staticmethod
+    def merge_json_payloads(payloads):
+        merged_data = {}
+
+        for payload in payloads:
+            for key, val in payload.items():
+                if key not in merged_data:
+                    merged_data[key] = val
+                else:
+                    if isinstance(val, list) and isinstance(merged_data[key], list):
+                        # Store the longest list
+                        merged_data[key] = max(val, merged_data[key], key=len)
+                    elif isinstance(val, str) and isinstance(merged_data[key], str):
+                        # Store the longest string
+                        merged_data[key] = max(val, merged_data[key], key=len)
+                    elif isinstance(val, (int, float)) and isinstance(merged_data[key], (int, float)):
+                        # Store the largest number
+                        merged_data[key] = max(val, merged_data[key])
+                    elif isinstance(val, bool) and isinstance(merged_data[key], bool):
+                        # Store True if any entry is True
+                        merged_data[key] = merged_data[key] or val
+                    elif isinstance(val, dict) and isinstance(merged_data[key], dict):
+                        # Recursively merge dictionaries
+                        merged_data[key] = NetworkAnalyzer.merge_json_payloads([merged_data[key], val])
 
     def get_all_payloads(self, endpoint):
         request_payloads = []
-        # seen = {} # (set(keys):memory_size)
-        try:
-            with open(self.flow_file, "rb") as f:
-                reader = FlowReader(f)
-                
-                for flow in reader.stream():
-                    if not isinstance(flow, HTTPFlow):
-                        continue
+        with open(self.flow_file, "rb") as f:
+            reader = FlowReader(f)
+            
+            for flow in reader.stream():
+                if not isinstance(flow, HTTPFlow):
+                    continue
 
-                    if endpoint not in flow.request.url:
-                        continue
+                if endpoint not in flow.request.url:
+                    continue
 
-                    try:
-                        request_data = json.loads(flow.request.content.decode('utf-8'))
-                        request_payloads.append(request_data)
-                    except (json.JSONDecodeError, UnicodeDecodeError):
-                        pass
-
-        except Exception as e:
-            print(f"Error processing flow file: {e}")
-        print(len(request_payloads))
+                try:
+                    request_data = json.loads(flow.request.content.decode('utf-8'))
+                    request_payloads.append(request_data)
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    pass
         return request_payloads
 
     def process_payloads(self, payloads: str):
@@ -107,16 +128,18 @@ class NetworkAnalyzer():
 
 def main():
     na = NetworkAnalyzer(None, 'harpa.csv', 'Harpa/harpa-lin-search-new.flow', "Harpa")
+    fp = na.get_party('first')
+    payloads = na.get_all_payloads('api.harpa.ai')
+    res = {}
+    for payload in payloads:
+        for key, val in payload.items():
+            if key not in res:
+                res[key] = val
+    with open('combined_payload.json', 'w') as f:
+        json.dump(res, f, indent=2)
 
-    with open('all_payloads.json', 'r') as f:
-        payloads = json.load(f)
 
-    payload_str = str(payloads[0])
-    
-    # print(payload_str)
 
-    response = ollama.chat(model='tinyllama', messages=[{"role": "user", "content": get_base_prompt('src/prompt.txt') + payload_str}])
-    print(response['message']['content'])
     
     
 if __name__ == "__main__":
