@@ -1,2 +1,4 @@
 mitmproxy
 pandas
+ollama
+setuptools

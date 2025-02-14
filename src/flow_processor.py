@@ -6,10 +6,10 @@ from mitmproxy.websocket import WebSocketMessage
 import pandas as pd
 
 class FlowProcessor:
-    def __init__(self, extension_name, flow_directory, output_csv, disconnect_json):
+    def __init__(self, extension_name, output_csv = None):
         self.extension_name = extension_name
-        self.flow_directory = flow_directory
-        self.disconnect_json = disconnect_json
+        # self.flow_directory = flow_directory
+        self.disconnect_json = "src/disconnect.json"
         self.disconnect_mapping_file = "disconnect_mapping.json"
         self.headers_list = ["req_header_cookie", "res_header_cookie", "req_header_set-cookie", "res_header_set-cookie"]
         self.categories_of_interest = ["Advertising", "Analytics", "FingerprintingInvasive", "FingerprintingGeneral", "Social"]
@@ -162,14 +162,14 @@ class FlowProcessor:
 
     def process_flows(self, file_path):
         self.parse_flow_file(file_path)
-        self.write_to_csv()
-        # return self.get_dataframe()
+        if self.output_csv is not None:
+            self.write_to_csv()
+        else:
+            return self.get_dataframe()
 
 if __name__ == "__main__":
     processor = FlowProcessor(
         extension_name="harpa",
-        flow_directory="Harpa",
         output_csv="src/harpa.csv",
-        disconnect_json="src/disconnect.json"
     )
     processor.process_flows("Harpa/harpa-lin-search-new.flow")

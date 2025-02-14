@@ -1,0 +1,52 @@
+I am going to give you a list of json objects, which are payloads for network requests and I need you to parse them and help me fill out the dictionary
+below based on the following rules. Return just the dictionary don't say anything else.
+
+res = {
+        "domain_of_page": bool,
+        "page_content": bool,
+        "google_search_results": bool,
+        "users_query": bool,
+        "user_details": bool,
+        "device_details": bool,
+        "timezone": bool,
+        "context_text": bool,
+        "chat_history": bool,
+        "chat_id": bool,
+    }
+
+Rules:
+1. If you see a webpage url in the request set "domain_of_page" to True else set it to False.
+    Example: "url": "https://www.google.com/search?q=I+grew+up+with+limited+access+to+computers+in+my+childhood+and+experiencing+classic+80s+pop+culture."
+2. if you see the content of any webapge (html or text that you think might part of a wepage) set "page_content" to True else set it to False
+3. If there seems to be Google Search results in the payload set "google_search_results" to True else set it to False
+4. If there is a query or a prompt in the payload set "user_query" to True else set it to False
+    Example:
+    "role": "user",
+    "text": "I drive to Hollywood every weekend to enjoy nightlife with my friends. What are some popular options for me in the neighborhood?"
+5. If there are user details in the payload (like their location or name) set "user_details" to True else set it to False
+    Example:
+    "About the user: My name is John Gabb.."
+6. If there are device details in the payload (like operating system) set "device_details" to True else set it to False
+7. If there is anything related to the timezone of the user set "timezone" to True else set it to False
+    Example:
+    "created_at": "2025-01-16T01:32:59.919Z" Specificallh the "T01" part
+9. If there is previous chat history or some dialogue set "chat_history" to True else set it to False
+    Example:
+    "messages": [
+        {
+            "role": "system",
+            "text": "About the user: My name is John Gabb.. Please answer in English. NEVER fabricate, infer, or guess information. Do no hallucinate links. Be to the point. Cite source links in markdown, if available."
+        },
+        {
+            "role": "user",
+            "text": "I drive to Hollywood every weekend to enjoy nightlife with my friends. What are some popular options for me in the neighborhood?"
+        },
+        {
+            "role": "assistant",
+            "text": "Hollywood offers a vibrant nightlife with various options you and your friends might enjoy. Here are some popular spots:\n\n1. **Frolic Room** - A classic dive bar known for its historic, cozy atmosphere.\n2. **Black Rabbit Rose** - Offers a mix of cocktails and magic shows.\n3. **Good Times at Davey Wayne's** - A retro-themed bar with a 1970s vibe.\n4. **Winstons** on Santa Monica Boulevard - An upmarket yet laid-back bar known for its cool Hollywood ambiance.\n5. **Sunset at EDITION** - Features a disco ball ceiling and upscale nightlife experience in West Hollywood.\n6. **Bar Lis** - Located at the Thompson Hollywood, offering a luxurious rooftop bar experience.\n7. **Academy LA** - Known for EDM events and lively club nights.\n8. **Avalon Hollywood** - Famous for its dance club atmosphere and renowned DJs.\n9. **Bootsy Bellows** - Combines art deco design with lively evening entertainment.\n10. **Bardot** - Offers live music and a stylish atmosphere for night outings.\n\nThese venues provide a mix of casual bars, upscale lounges, and energetic clubs, catering to a range of preferences. Make sure to check any current events or entry requirements they might have."
+        },
+10. If there is any sort of conversation_id or chat_id in the payload set "chat_id" to True else set it to False
+    Example:
+    "conversation_id": "a97f363c-4323-4afe-b0c1-db3770b5b918",
+
+Here is the list of json payloads:
