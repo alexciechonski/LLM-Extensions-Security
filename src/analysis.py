@@ -1,6 +1,5 @@
 import pandas as pd    
 from collections import defaultdict
-from flow_processor import FlowProcessor
 import json
 from mitmproxy.io import FlowReader
 from mitmproxy.http import HTTPFlow
@@ -8,8 +7,15 @@ import ollama
 from src.utils import *
 
 class NetworkAnalyzer():
-    def __init__(self, df, csv_path, flow_file, extension) -> None:
-        self.network = df if df else pd.read_csv(csv_path)
+    def __init__(
+            self,
+            df,
+            # csv_path,
+            flow_file,
+            extension
+            ) -> None:
+        # self.network = pd.read_csv(csv_path)
+        self.network = df
         self.res = defaultdict(set)        
         self.extension = extension
         self.flow_file = flow_file
@@ -48,31 +54,6 @@ class NetworkAnalyzer():
             return self.remove_noise(domains)
         return domains
 
-    @staticmethod
-    def merge_json_payloads(payloads):
-        merged_data = {}
-
-        for payload in payloads:
-            for key, val in payload.items():
-                if key not in merged_data:
-                    merged_data[key] = val
-                else:
-                    if isinstance(val, list) and isinstance(merged_data[key], list):
-                        # Store the longest list
-                        merged_data[key] = max(val, merged_data[key], key=len)
-                    elif isinstance(val, str) and isinstance(merged_data[key], str):
-                        # Store the longest string
-                        merged_data[key] = max(val, merged_data[key], key=len)
-                    elif isinstance(val, (int, float)) and isinstance(merged_data[key], (int, float)):
-                        # Store the largest number
-                        merged_data[key] = max(val, merged_data[key])
-                    elif isinstance(val, bool) and isinstance(merged_data[key], bool):
-                        # Store True if any entry is True
-                        merged_data[key] = merged_data[key] or val
-                    elif isinstance(val, dict) and isinstance(merged_data[key], dict):
-                        # Recursively merge dictionaries
-                        merged_data[key] = NetworkAnalyzer.merge_json_payloads([merged_data[key], val])
-
     def get_all_payloads(self, endpoint):
         request_payloads = []
         with open(self.flow_file, "rb") as f:
@@ -92,56 +73,34 @@ class NetworkAnalyzer():
                     pass
         return request_payloads
 
-    def process_payloads(self, payloads: str):
-        try:
-            prompt = get_base_prompt("src/prompt.txt") + payloads
-            response = ollama.chat(model='tinyllama', messages=[{"role": "user", "content": prompt}])
-            return response['message']['content']  # Extract the generated response
-        except Exception as e:
-            return f"Error communicating with Ollama: {e}"
-
-    def get_summary(self, endpoints: list[str]):
-        payload_str = ""
-        payloads = [self.get_all_payloads(endpoint) for endpoint in endpoints]
+    @staticmethod
+    def combine_payloads(payloads):
+        res = {}
+        bad = []
         for payload in payloads:
-            payload_str += str(payload) + '\n'
-        return self.process_payloads(payload_str)
+            try:
+                for key, val in payload.items():
+                    if key not in res:
+                        res[key] = val
+            except AttributeError:
+                bad.append(payload)
+        # with open('src/bad_payloads.json', 'w') as f:
+        #     json.dump(bad, f, indent=2)
+        return res
 
-    # def get_cookies(self, endpoint):
-    #     pass
-
-    def process_llm_resp(resp):
-        pass
 
     def run(self):
         first_parties = self.get_party('first')
-        fp_summary = self.get_summary(first_parties)
-
         third_parties = self.get_party('third')
-        tp_summary = self.get_summary(third_parties)
-
-        return {
-            'first-party':fp_summary,
-            'third-party': tp_summary
-        }
-
+        fp_payloads = [self.combine_payloads(self.get_all_payloads(endpoint)) for endpoint in first_parties]
+        tp_payloads = [self.combine_payloads(self.get_all_payloads(endpoint)) for endpoint in third_parties]
+        return fp_payloads, tp_payloads
 
 def main():
-    na = NetworkAnalyzer(None, 'harpa.csv', 'Harpa/harpa-lin-search-new.flow', "Harpa")
-    fp = na.get_party('first')
-    payloads = na.get_all_payloads('api.harpa.ai')
-    res = {}
-    for payload in payloads:
-        for key, val in payload.items():
-            if key not in res:
-                res[key] = val
-    with open('combined_payload.json', 'w') as f:
-        json.dump(res, f, indent=2)
+    na = NetworkAnalyzer('max_test.csv', 'working.flow', "maxai")
+    fp, tp = na.run()
+    print(any(na.network['contacted_party'] == 'third-party'))
 
-
-
-    
-    
 if __name__ == "__main__":
    main()
 

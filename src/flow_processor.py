@@ -49,6 +49,7 @@ class FlowProcessor:
             for flow in reader.stream():
                 if not hasattr(flow, "request") or not flow.request:
                     continue
+                # print(flow.request.host, flow.request.timestamp_end)
 
                 self.process_flow(flow)
 
@@ -77,6 +78,7 @@ class FlowProcessor:
         response_headers = response.headers if response else {}
         disconnect_category = self.disconnect_mapping.get(request_domain, "Other")
         origin_header = request_headers.get("origin", "")
+        # print('origin header', origin_header)
         context = "Extension" if origin_header.startswith("chrome-extension://") else "Foreground"
 
         if context != "Extension" and disconnect_category not in self.categories_of_interest:
@@ -164,12 +166,14 @@ class FlowProcessor:
         self.parse_flow_file(file_path)
         if self.output_csv is not None:
             self.write_to_csv()
-        else:
-            return self.get_dataframe()
+        return self.get_dataframe()
 
 if __name__ == "__main__":
     processor = FlowProcessor(
-        extension_name="harpa",
-        output_csv="src/harpa.csv",
+        extension_name="maxai",
+        output_csv=None,
     )
-    processor.process_flows("Harpa/harpa-lin-search-new.flow")
+    processor.parse_flow_file('working.flow')
+    df = processor.process_flows('MaxAI/max-lin-search-new.flow')
+    df.to_csv('processed_max.csv')
+    print(df[['request_domain', 'contacted_party']])
