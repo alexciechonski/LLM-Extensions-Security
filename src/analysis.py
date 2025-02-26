@@ -3,8 +3,6 @@ from collections import defaultdict
 import json
 from mitmproxy.io import FlowReader
 from mitmproxy.http import HTTPFlow
-import ollama
-from src.utils import *
 
 class NetworkAnalyzer():
     def __init__(
