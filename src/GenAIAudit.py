@@ -60,15 +60,14 @@ class GenAIAudit:
 
 def main():
     audit = GenAIAudit('maxai')
-    # audit.start_proxy()
-    # df = audit.processor.process_flows("working.flow")
+    audit.start_proxy()
+    df = audit.processor.process_flows("working.flow")
     # df.to_csv('max_test.csv')
-    # print(df)
-    # print(df['contacted_party'])
+    print(df)
+    print(df['contacted_party'])
 
-    # analsysis
-    df = pd.read_csv('processed_max.csv')
-    analyzer = NetworkAnalyzer(df, "MaxAI/max-lin-search-new.flow", audit.extension)
+    # df = pd.read_csv('max_test.csv')
+    analyzer = NetworkAnalyzer(df, "working.flow", audit.extension)
     fp, tp = analyzer.run()
 
     json_args = json.dumps({"fp": fp, "tp": tp})

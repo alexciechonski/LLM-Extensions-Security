@@ -78,8 +78,7 @@ class FlowProcessor:
         response_headers = response.headers if response else {}
         disconnect_category = self.disconnect_mapping.get(request_domain, "Other")
         origin_header = request_headers.get("origin", "")
-        # print('origin header', origin_header)
-        context = "Extension" if origin_header.startswith("chrome-extension://") else "Foreground"
+        context = "Extension" if origin_header.startswith("chrome-extension://") or self.extension_name.lower() in origin_header else "Foreground"
 
         if context != "Extension" and disconnect_category not in self.categories_of_interest:
             return
@@ -173,7 +172,6 @@ if __name__ == "__main__":
         extension_name="maxai",
         output_csv=None,
     )
-    processor.parse_flow_file('working.flow')
-    df = processor.process_flows('MaxAI/max-lin-search-new.flow')
-    df.to_csv('processed_max.csv')
+    df = processor.process_flows('working.flow')
     print(df[['request_domain', 'contacted_party']])
+    # df.to_csv('max_test.csv')
