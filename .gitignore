@@ -11,3 +11,4 @@ resources/
 unused/
 test.py
 __pycache__/
+dist/
