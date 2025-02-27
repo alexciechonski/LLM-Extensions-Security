@@ -1,0 +1,16 @@
+Metadata-Version: 2.2
+Name: extension_audit
+Version: 1.0.0
+Summary: A tool to audit browser extensions using mitmproxy
+Author-email: Alex Ciechonski <alex.ciechonski.22@ucl.ac.uk>
+License: MIT
+Project-URL: Homepage, https://github.com/alexciechonski/LLM-Extensions-Security
+Project-URL: Repository, https://github.com/alexciechonski/LLM-Extensions-Security
+Project-URL: Issues, https://github.com/alexciechonski/LLM-Extensions-Security/issues
+Keywords: browser,security,mitmproxy,streamlit,audit
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: mitmproxy
+Requires-Dist: streamlit
+Requires-Dist: pandas

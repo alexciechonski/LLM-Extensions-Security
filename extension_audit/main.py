@@ -9,20 +9,17 @@ from mitmproxy.io import FlowReader
 from mitmproxy.http import HTTPFlow
 import time
 import json
+import tempfile
 
 class GenAIAudit:
-    def __init__(self, extension, gui=False) -> None:
+    def __init__(self, extension) -> None:
         self.extension = extension
         self.processor = FlowProcessor(self.extension)
-        self.gui = gui
+        self.flow_path = os.path.join(tempfile.gettempdir(), "working.flow")
 
-    @staticmethod
-    def start_proxy():
-        flow_path = os.path.join(os.getcwd(), "working.flow")
-        if os.path.exists(flow_path):
-            print("path exist")
-        else:
-            print('bad path')
+
+    def start_proxy(self):
+        flow_path = self.flow_path
         time.sleep(3)
 
         try:
@@ -39,11 +36,20 @@ class GenAIAudit:
             
     def run(self):
         self.start_proxy()
-        df = self.processor.process_flows("working.flow")
-        analyzer = NetworkAnalyzer(df, "working.flow", self.extension)
-        fp, tp = analyzer.run()
-        json_args = json.dumps({"fp": fp, "tp": tp})
-        subprocess.Popen(["streamlit", "run", "src/app.py", "--", json_args], start_new_session=True)
+        try:
+            df = self.processor.process_flows("working.flow")
+            analyzer = NetworkAnalyzer(df, "working.flow", self.extension)
+            fp, tp = analyzer.run()
+
+            json_args = json.dumps({"fp": fp, "tp": tp})
+            subprocess.Popen(["streamlit", "run", "src/app.py", "--", json_args], start_new_session=True)
+
+        except KeyboardInterrupt:
+            print('Quitting GUI')
+        finally:
+            if os.path.exists(self.flow_path):
+                print(f"Deleting flow file: {self.flow_path}")
+                os.remove(self.flow_path)
 
 def main():
     parser = argparse.ArgumentParser(description="Run GenAIAudit with network traffic analysis.")
@@ -54,13 +60,8 @@ def main():
         help="Name of the browser extension being analyzed (e.g., maxai)."
     )
     
-    parser.add_argument(
-        "--gui",
-        action="store_true",
-        help="Enable GUI mode using Streamlit."
-    )
     args = parser.parse_args()
-    audit = GenAIAudit(extension=args.extension_name, gui=args.gui)
+    audit = GenAIAudit(extension=args.extension_name)
     audit.run()
 
 if __name__ == "__main__":
