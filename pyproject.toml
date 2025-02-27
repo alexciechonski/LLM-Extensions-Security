@@ -26,4 +26,4 @@ Repository = "https://github.com/alexciechonski/LLM-Extensions-Security"
 Issues = "https://github.com/alexciechonski/LLM-Extensions-Security/issues"
 
 [project.scripts]
-extension_audit = "extension_audit.main:main"  # Creates CLI command
+extension_audit = "extension_audit.main:main"

@@ -1,2 +1,0 @@
-[console_scripts]
-extension_audit = extension_audit.main:main

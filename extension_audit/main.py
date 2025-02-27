@@ -1,6 +1,6 @@
 #!/usr/bin/env python3  # Allows execution without 'python'
-from src.analysis import NetworkAnalyzer
-from src.flow_processor import FlowProcessor
+from analysis import NetworkAnalyzer
+from flow_processor import FlowProcessor
 import pandas as pd
 import argparse
 import os
@@ -44,8 +44,6 @@ class GenAIAudit:
             json_args = json.dumps({"fp": fp, "tp": tp})
             subprocess.Popen(["streamlit", "run", "src/app.py", "--", json_args], start_new_session=True)
 
-        except KeyboardInterrupt:
-            print('Quitting GUI')
         finally:
             if os.path.exists(self.flow_path):
                 print(f"Deleting flow file: {self.flow_path}")
