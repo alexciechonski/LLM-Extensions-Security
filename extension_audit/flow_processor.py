@@ -9,7 +9,7 @@ class FlowProcessor:
     def __init__(self, extension_name, output_csv = None):
         self.extension_name = extension_name
         # self.flow_directory = flow_directory
-        self.disconnect_json = "src/disconnect.json"
+        self.disconnect_json = "extension_audit/disconnect.json"
         self.disconnect_mapping_file = "disconnect_mapping.json"
         self.headers_list = ["req_header_cookie", "res_header_cookie", "req_header_set-cookie", "res_header_set-cookie"]
         self.categories_of_interest = ["Advertising", "Analytics", "FingerprintingInvasive", "FingerprintingGeneral", "Social"]
@@ -169,9 +169,9 @@ class FlowProcessor:
 
 if __name__ == "__main__":
     processor = FlowProcessor(
-        extension_name="maxai",
+        extension_name="copilot",
         output_csv=None,
     )
-    df = processor.process_flows('working.flow')
+    df = processor.process_flows('copilot-lin-control.flow')
     print(df[['request_domain', 'contacted_party']])
     # df.to_csv('max_test.csv')

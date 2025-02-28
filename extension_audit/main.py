@@ -1,6 +1,6 @@
-#!/usr/bin/env python3  # Allows execution without 'python'
-from analysis import NetworkAnalyzer
-from flow_processor import FlowProcessor
+#!/usr/bin/env python3
+from extension_audit.analysis import NetworkAnalyzer
+from extension_audit.flow_processor import FlowProcessor
 import pandas as pd
 import argparse
 import os
@@ -37,12 +37,12 @@ class GenAIAudit:
     def run(self):
         self.start_proxy()
         try:
-            df = self.processor.process_flows("working.flow")
-            analyzer = NetworkAnalyzer(df, "working.flow", self.extension)
+            df = self.processor.process_flows(self.flow_path)
+            analyzer = NetworkAnalyzer(df, self.flow_path, self.extension)
             fp, tp = analyzer.run()
 
             json_args = json.dumps({"fp": fp, "tp": tp})
-            subprocess.Popen(["streamlit", "run", "src/app.py", "--", json_args], start_new_session=True)
+            subprocess.Popen(["streamlit", "run", "extension_audit/app.py", "--", json_args], start_new_session=True)
 
         finally:
             if os.path.exists(self.flow_path):
@@ -68,9 +68,8 @@ if __name__ == "__main__":
 
 """
 TODO:
-2. get argparse to work extension_audit --extnension_name --gui
+2. Make sure the tool works for copilot
 3. remove changing wi-fi
 4. better gui using js
-5. temp file
 5. better payload viewing
 """
