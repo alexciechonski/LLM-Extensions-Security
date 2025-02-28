@@ -107,7 +107,6 @@ class NetworkAnalyzer():
             tp_payloads.append({'wss':tp_wss})
         return fp_payloads, tp_payloads
 
-
 def main():
     na = NetworkAnalyzer('copilot_res.csv', 'copilot-lin-control.flow', "copilot")
     fp, tp = na.run()

@@ -68,8 +68,8 @@ if __name__ == "__main__":
 
 """
 TODO:
-2. Make sure the tool works for copilot
 3. remove changing wi-fi
 4. better gui using js
 5. better payload viewing
+6. code optimization and linting
 """
