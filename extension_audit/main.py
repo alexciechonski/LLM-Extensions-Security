@@ -16,10 +16,44 @@ class GenAIAudit:
         self.extension = extension
         self.processor = FlowProcessor(self.extension)
         self.flow_path = os.path.join(tempfile.gettempdir(), "working.flow")
+        self.network_interface = 'Wi-Fi'
+        self.proxy_port = 8080
 
+    def enable_proxy(self):
+        """Set the macOS proxy settings for Wi-Fi."""
+        try:
+            print("Enabling Wi-Fi proxy settings...")
+            subprocess.run(
+                [
+                    "networksetup", "-setwebproxy", self.network_interface, "127.0.0.1", str(self.proxy_port)
+                ],
+                check=True
+            )
+            subprocess.run(
+                [
+                    "networksetup", "-setsecurewebproxy", self.network_interface, "127.0.0.1", str(self.proxy_port)
+                ],
+                check=True
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to enable proxy: {e}")
+
+    def disable_proxy(self):
+        """Reset the macOS proxy settings after mitmproxy stops."""
+        try:
+            print("Disabling Wi-Fi proxy settings...")
+            subprocess.run(
+                ["networksetup", "-setwebproxystate", self.network_interface, "off"], check=True
+            )
+            subprocess.run(
+                ["networksetup", "-setsecurewebproxystate", self.network_interface, "off"], check=True
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to disable proxy: {e}")
 
     def start_proxy(self):
         flow_path = self.flow_path
+        self.enable_proxy()
         time.sleep(3)
 
         try:
@@ -33,6 +67,8 @@ class GenAIAudit:
             proxy_process.wait()
         except subprocess.CalledProcessError as e:
             print(f"Error running mitmproxy: {e}")
+        finally:
+            self.disable_proxy()
             
     def run(self):
         self.start_proxy()
@@ -68,7 +104,6 @@ if __name__ == "__main__":
 
 """
 TODO:
-3. remove changing wi-fi
 4. better gui using js
 5. better payload viewing
 6. code optimization and linting
