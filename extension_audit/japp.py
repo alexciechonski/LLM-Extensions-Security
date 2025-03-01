@@ -14,10 +14,9 @@ class TreeNode:
         """Add a child to the current node."""
         self.children.append(child_node)
 
-def json_to_tree(json_data, root_name="root"):
+def json_to_tree(json_data, root_name="payload"):
     """Convert a JSON object into a tree structure and return the root TreeNode."""
     
-    # Create root node
     root = TreeNode(root_name)
 
     def build_tree(node, data):
@@ -26,15 +25,14 @@ def json_to_tree(json_data, root_name="root"):
             for key, value in data.items():
                 child_node = TreeNode(key)
                 node.add_child(child_node)
-                build_tree(child_node, value)  # Recur for nested structures
+                build_tree(child_node, value)
         elif isinstance(data, list):
-            for i, item in enumerate(data):
-                child_node = TreeNode(f"Item {i}")
-                node.add_child(child_node)
-                build_tree(child_node, item)
+            for index, item in enumerate(data):
+                list_item_node = TreeNode(f"list_index{index + 1}") # Numbered nodes for lists
+                node.add_child(list_item_node)
+                build_tree(list_item_node, item)
         else:
-            # Leaf node with actual value
-            node.value = data
+            node.value = data  # Store the primitive value
 
     build_tree(root, json_data)
     return root  # Return the root TreeNode
@@ -49,10 +47,12 @@ def traverse(root):
         """Generate a unique ID using the parent ID as a prefix."""
         return f"{parent_id}_{node_name}" if parent_id else node_name
 
-    def add_node(node_id, node_label):
+    def add_node(node_id, node):
         """Add a node to the visualization only if it doesn't already exist."""
+        node_label = f"{node.name}: {node.value}" if node.value else node.name
+        color = "lightblue" if 'list_index' not in node_label else 'gray'
         if node_id not in node_ids:
-            nodes.append(Node(id=node_id, label=node_label, size=25, color="lightblue", shape='square'))
+            nodes.append(Node(id=node_id, label=node_label, size=25, color=color, shape='box'))
             node_ids.add(node_id)  # Mark this ID as used
 
     def add_edge(parent_id, child_id):
@@ -67,9 +67,9 @@ def traverse(root):
         queue = deque([(None, root)])  # Queue contains (parent_id, node) tuples
         
         while queue:
-            parent_id, node = queue.popleft()  # Dequeue a node
+            parent_id, node = queue.popleft()  # Dequeue a node                
             node_id = generate_unique_id(parent_id, node.name)  # Unique ID for node
-            add_node(node_id, node.name)  # Add current node
+            add_node(node_id, node)  # Add current node
             
             if parent_id:
                 add_edge(parent_id, node_id)  # Connect to parent
@@ -94,7 +94,11 @@ if __name__ == "__main__":
         },
         "contacts": [
             {"type": "email", "value": "john@example.com"},
-            {"type": "phone", "value": "+123456789"}
+            {"type": "phone", "value": "+123456789"},
+            {"abc":"lol", "xd":{"a":1}}
+        ],
+        "list":[
+            1,2,3,4,5
         ]
     }
 
@@ -102,18 +106,28 @@ if __name__ == "__main__":
 
     # Generate nodes and edges for visualization
     nodes, edges = traverse(root)
+    
+    def dfs(root):
+        if not root:
+            return
+        print(root.name)
+        for child in root.children:
+            dfs(child)
+
+    # dfs(root)
 
     # Streamlit UI
     st.title("JSON Tree Visualization with AGraph")
 
     # Render the graph
     config = Config(
-                width=1000, 
-                height=1000, 
-                directed=True, 
-                physics=True, 
-                hierarchical=True
-            )
+        width=1000, 
+        height=1000, 
+        directed=True, 
+        physics=True,  # Enable physics but tune settings
+        hierarchical=True,
+    )
+
     agraph(nodes=nodes, 
         edges=edges, 
         config=config)
