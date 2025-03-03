@@ -20,11 +20,15 @@ def display_results(fp, tp):
 
     if fp_graph:
         for element in json_obj_1:
-            grr.generate(element)
+            if isinstance(element, dict) and 'wss' not in element:
+                with st.container():
+                    grr.generate(element)
     elif fp_raw:
         st.write(json_obj_1)
     elif tp_graph:
-        grr.generate(json_obj_2)
+        for element in json_obj_2:
+            if isinstance(element, dict) and 'wss' not in element:
+                grr.generate(element)
     elif tp_raw:
         st.write(json_obj_2)
 

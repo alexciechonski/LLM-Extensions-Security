@@ -24,9 +24,9 @@ class Grapher:
         root = TreeNode([], [])
 
         def build_tree(node, data):
+            # make it work for lists as well
             for key, val in data.items():
                 if isinstance(val, dict):
-                    # Create an intermediate node for the nested dictionary
                     intermediate = TreeNode([key], [])
                     node.add_child(intermediate)
                     working_node = TreeNode([],[])
