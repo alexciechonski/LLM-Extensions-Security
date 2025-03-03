@@ -29,15 +29,17 @@ def json_parser(json_data):
                 node.add_child(intermediate)
                 working_node = TreeNode([],[])
                 intermediate.add_child(working_node)
-                build_tree(working_node, val)  # Recursively handle nested JSON
+                build_tree(working_node, val) 
             elif isinstance(val, list):
-                # Create an intermediate node for the list
                 intermediate = TreeNode([key], [])
                 node.add_child(intermediate)
                 for element in val:
-                    intermediate.add_child(TreeNode([element], []))
+                    if isinstance(element, dict):
+                        dict_obj = [', '.join([f"{key}: {val}" for key, val in element.items()])]   
+                        intermediate.add_child(TreeNode(dict_obj, []))
+                    else:                   
+                        intermediate.add_child(TreeNode([element], []))
             else:
-                # Append key-value pair as a string to the current node
                 node.add_value(f"{key}: {val}")
     build_tree(root, json_data)
     return root
