@@ -1,133 +1,130 @@
 import json
-import streamlit as st
+from typing import List, Dict, Union
 from streamlit_agraph import agraph, Node, Edge, Config
-from collections import deque
+import streamlit as st
 
-class TreeNode:
-    """Class representing a node in the JSON tree."""
-    def __init__(self, name, value=None):
-        self.name = name
-        self.value = value
-        self.children = []
 
-    def add_child(self, child_node):
-        """Add a child to the current node."""
-        self.children.append(child_node)
+class Graph:
+    def __init__(self):
+        self.nodes = []
+        self.edges = []
 
-def json_to_tree(json_data, root_name="payload"):
-    """Convert a JSON object into a tree structure and return the root TreeNode."""
-    
-    root = TreeNode(root_name)
+    def add_node(self, node_id, text, data=None):
+        """Adds a node to the graph."""
+        if data is None:
+            data = {}
+        node = {"id": node_id, "text": text, "data": data}
+        self.nodes.append(node)
+        return node_id
 
-    def build_tree(node, data):
-        """Recursive function to populate the tree."""
-        if isinstance(data, dict):
-            for key, value in data.items():
-                child_node = TreeNode(key)
-                node.add_child(child_node)
-                build_tree(child_node, value)
-        elif isinstance(data, list):
-            for index, item in enumerate(data):
-                list_item_node = TreeNode(f"list_index{index + 1}") # Numbered nodes for lists
-                node.add_child(list_item_node)
-                build_tree(list_item_node, item)
-        else:
-            node.value = data  # Store the primitive value
+    def add_edge(self, from_id, to_id):
+        """Adds an edge to the graph."""
+        self.edges.append({"from": from_id, "to": to_id})
 
-    build_tree(root, json_data)
-    return root  # Return the root TreeNode
 
-def traverse(root):
-    """Convert a TreeNode structure into nodes and edges for visualization in Streamlit AGraph."""
-    nodes = []
-    edges = []
-    node_ids = set()  # Track existing nodes to prevent duplicates
+class ParserState:
+    def __init__(self):
+        self.graph = Graph()
 
-    def generate_unique_id(parent_id, node_name):
-        """Generate a unique ID using the parent ID as a prefix."""
-        return f"{parent_id}_{node_name}" if parent_id else node_name
 
-    def add_node(node_id, node):
-        """Add a node to the visualization only if it doesn't already exist."""
-        node_label = f"{node.name}: {node.value}" if node.value else node.name
-        color = "lightblue" if 'list_index' not in node_label else 'gray'
-        if node_id not in node_ids:
-            nodes.append(Node(id=node_id, label=node_label, size=25, color=color, shape='box'))
-            node_ids.add(node_id)  # Mark this ID as used
-
-    def add_edge(parent_id, child_id):
-        """Add an edge from parent to child."""
-        edges.append(Edge(source=parent_id, target=child_id))
-
-    def bfs(root):
-        """Perform BFS traversal to populate nodes and edges."""
-        if not root:
-            return
-        
-        queue = deque([(None, root)])  # Queue contains (parent_id, node) tuples
-        
-        while queue:
-            parent_id, node = queue.popleft()  # Dequeue a node                
-            node_id = generate_unique_id(parent_id, node.name)  # Unique ID for node
-            add_node(node_id, node)  # Add current node
-            
+def traverse_json(data, parent_id=None, graph=None):
+    """Recursively traverse JSON and build a graph."""
+    if isinstance(data, dict):
+        for key, value in data.items():
+            node_id = f"{parent_id}.{key}" if parent_id else key
+            graph.add_node(node_id, key)
             if parent_id:
-                add_edge(parent_id, node_id)  # Connect to parent
-            
-            for child in node.children:  # Iterate through children
-                queue.append((node_id, child))  # Enqueue child with parent ID
+                graph.add_edge(parent_id, node_id)
+            traverse_json(value, node_id, graph)
 
-    bfs(root)  # Start BFS traversal
+    elif isinstance(data, list):
+        for item in data:
+            node_id = f"{parent_id}" if parent_id else "list_item"
+            graph.add_node(node_id, "list_item")
+            if parent_id:
+                graph.add_edge(parent_id, node_id)
+            traverse_json(item, node_id, graph)
 
-    return nodes, edges
+    else:
+        graph.add_node(parent_id, str(data), {"value": data})
 
 
-# Example usage
-if __name__ == "__main__":
-    json_data = {
-        "name": "John Doe",
-        "age": 30,
-        "address": {
-            "street": "123 Main St",
-            "city": "New York",
-            "zipcode": "10001"
-        },
-        "contacts": [
-            {"type": "email", "value": "john@example.com"},
-            {"type": "phone", "value": "+123456789"},
-            {"abc":"lol", "xd":{"a":1}}
-        ],
-        "list":[
-            1,2,3,4,5
-        ]
-    }
+def json_parser(json_str):
+    """Main function to parse JSON into a graph."""
+    try:
+        data = json.loads(json_str)
+        states = ParserState()
 
-    root = json_to_tree(json_data)
+        # Start traversal
+        traverse_json(data, parent_id="root", graph=states.graph)
 
-    # Generate nodes and edges for visualization
-    nodes, edges = traverse(root)
-    
-    def dfs(root):
-        if not root:
-            return
-        print(root.name)
-        for child in root.children:
-            dfs(child)
+        return states.graph.__dict__
 
-    # dfs(root)
+    except Exception as e:
+        print("Error parsing JSON:", e)
+        return {"nodes": [], "edges": []}
 
-    # Streamlit UI
-    st.title("JSON Tree Visualization with AGraph")
 
-    # Render the graph
-    config = Config(
-        width=1000, 
-        height=1000, 
-        directed=True, 
-        physics=True,  # Enable physics but tune settings
-        hierarchical=True,
+def add_node(node, graph_nodes):
+    graph_nodes.append(
+        Node(
+            id=node['id'],
+            label=node['text'],
+            size=25,
+            color="lightblue",
+            shape="box",
+            font={"color": "black"},
+            borderWidth=2,
+            borderRadius=0
+        )
     )
 
-    agraph(nodes=nodes, 
-        edges=edges, 
-        config=config)
+
+def add_edge(edge, graph_edges):
+    graph_edges.append(Edge(source=edge.get('from'), target=edge.get('to')))
+
+
+def get_graph(json_graph):
+    """Builds the graph using agraph and Streamlit."""
+    nodes_lst, edges_lst = json_graph.get("nodes", []), json_graph.get("edges", [])
+    graph_nodes, graph_edges = [], []
+
+    for node in nodes_lst:
+        add_node(node, graph_nodes)
+
+    for edge in edges_lst:
+        add_edge(edge, graph_edges)
+
+    config = Config(
+        width=750,
+        height=950,
+        directed=True,
+        physics=True,
+        hierarchical=False,
+    )
+    
+    return agraph(nodes=graph_nodes, edges=graph_edges, config=config)
+
+
+# Streamlit App
+st.title("JSON Graph Visualizer")
+
+# JSON Input
+json_data = {
+    "name": "John Doe",
+    "age": 30,
+    "address": {
+        "street": "123 Main St",
+        "city": "New York",
+        "zipcode": "10001"
+    },
+    "contacts": [
+        {"type": "email", "value": "john@example.com"},
+        {"type": "phone", "value": "+123456789"}
+    ],
+    "list":[1,2,3,4,5,{'element_six': 'six'}]
+}
+
+if st.button("Generate Graph"):
+    graph = json_parser(json_data)
+    get_graph(graph)
