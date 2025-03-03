@@ -27,17 +27,18 @@ def json_parser(json_data):
                 # Create an intermediate node for the nested dictionary
                 intermediate = TreeNode([key], [])
                 node.add_child(intermediate)
-                build_tree(intermediate, val)  # Recursively handle nested JSON
+                working_node = TreeNode([],[])
+                intermediate.add_child(working_node)
+                build_tree(working_node, val)  # Recursively handle nested JSON
             elif isinstance(val, list):
                 # Create an intermediate node for the list
                 intermediate = TreeNode([key], [])
                 node.add_child(intermediate)
                 for element in val:
-                    intermediate.add_child(TreeNode(element, []))
+                    intermediate.add_child(TreeNode([element], []))
             else:
                 # Append key-value pair as a string to the current node
                 node.add_value(f"{key}: {val}")
-
     build_tree(root, json_data)
     return root
 
