@@ -91,6 +91,7 @@ class Grapher:
                 directed=True, 
                 physics=True, 
                 hierarchical=False,
+                clickable=False
                 # **kwargs
                 )
         return agraph(nodes=nodes, 

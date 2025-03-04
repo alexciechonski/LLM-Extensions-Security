@@ -57,7 +57,14 @@ class GenAIAudit:
         time.sleep(3)
 
         try:
-            proxy_process = subprocess.Popen(["mitmweb", "-w", flow_path]) # change to mitmproxy
+            
+            proxy_process = subprocess.Popen(
+            ["mitmweb", "-w", flow_path],
+            stdout=subprocess.DEVNULL,       
+            stderr=subprocess.DEVNULL
+            )
+
+
             while proxy_process.poll() is None:
                 time.sleep(1)
 
