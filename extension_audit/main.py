@@ -107,11 +107,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-"""
-TODO:
-4. better gui using js
-5. better payload viewing
-6. code optimization and linting
-"""
