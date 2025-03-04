@@ -53,6 +53,14 @@ class Grapher:
         return '\n'.join(val)
 
     @staticmethod
+    def get_size(val):
+        base_size = 16
+        min_size = 6 
+        text_length = len(str(val))          
+        font_size = max(min_size, base_size - (text_length // 8))
+        return font_size
+
+    @staticmethod
     def get_graph(root):
         nodes, edges = [], []
         id = 0
@@ -63,7 +71,14 @@ class Grapher:
 
         while queue:
             parent_id, node = queue.popleft()
-            nodes.append(Node(id, label=Grapher.process_table_text(node.val), shape='box', color="white"))
+            nodes.append(
+                Node(
+                    id,
+                    label=Grapher.process_table_text(node.val),
+                    shape='box', color="white",
+                    font={'size':Grapher.get_size(node.val)}
+                    )
+                )
             edges.append(Edge(parent_id, id))
 
             for child in node.children:
