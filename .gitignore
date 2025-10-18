@@ -1,6 +1,7 @@
 venv/
 dist/
 copilot-lin-control.flow
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
