@@ -1,5 +1,6 @@
 venv/
 dist/
+copilot-lin-control.flow
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

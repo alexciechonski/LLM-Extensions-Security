@@ -1,6 +1,6 @@
-#!/usr/bin/env python3  # Allows execution without 'python'
-from analysis import NetworkAnalyzer
-from flow_processor import FlowProcessor
+#!/usr/bin/env python3
+from extension_audit.analysis import NetworkAnalyzer
+from extension_audit.flow_processor import FlowProcessor
 import pandas as pd
 import argparse
 import os
@@ -16,14 +16,55 @@ class GenAIAudit:
         self.extension = extension
         self.processor = FlowProcessor(self.extension)
         self.flow_path = os.path.join(tempfile.gettempdir(), "working.flow")
+        self.network_interface = 'Wi-Fi'
+        self.proxy_port = 8080
 
+    def enable_proxy(self):
+        """Set the macOS proxy settings for Wi-Fi."""
+        try:
+            print("Enabling Wi-Fi proxy settings...")
+            subprocess.run(
+                [
+                    "networksetup", "-setwebproxy", self.network_interface, "127.0.0.1", str(self.proxy_port)
+                ],
+                check=True
+            )
+            subprocess.run(
+                [
+                    "networksetup", "-setsecurewebproxy", self.network_interface, "127.0.0.1", str(self.proxy_port)
+                ],
+                check=True
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to enable proxy: {e}")
+
+    def disable_proxy(self):
+        """Reset the macOS proxy settings after mitmproxy stops."""
+        try:
+            print("Disabling Wi-Fi proxy settings...")
+            subprocess.run(
+                ["networksetup", "-setwebproxystate", self.network_interface, "off"], check=True
+            )
+            subprocess.run(
+                ["networksetup", "-setsecurewebproxystate", self.network_interface, "off"], check=True
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to disable proxy: {e}")
 
     def start_proxy(self):
         flow_path = self.flow_path
+        self.enable_proxy()
         time.sleep(3)
 
         try:
-            proxy_process = subprocess.Popen(["mitmweb", "-w", flow_path]) # change to mitmproxy
+            
+            proxy_process = subprocess.Popen(
+            ["mitmweb", "-w", flow_path],
+            stdout=subprocess.DEVNULL,       
+            stderr=subprocess.DEVNULL
+            )
+
+
             while proxy_process.poll() is None:
                 time.sleep(1)
 
@@ -33,16 +74,18 @@ class GenAIAudit:
             proxy_process.wait()
         except subprocess.CalledProcessError as e:
             print(f"Error running mitmproxy: {e}")
+        finally:
+            self.disable_proxy()
             
     def run(self):
         self.start_proxy()
         try:
-            df = self.processor.process_flows("working.flow")
-            analyzer = NetworkAnalyzer(df, "working.flow", self.extension)
+            df = self.processor.process_flows(self.flow_path)
+            analyzer = NetworkAnalyzer(df, self.flow_path, self.extension)
             fp, tp = analyzer.run()
 
             json_args = json.dumps({"fp": fp, "tp": tp})
-            subprocess.Popen(["streamlit", "run", "src/app.py", "--", json_args], start_new_session=True)
+            subprocess.Popen(["streamlit", "run", "extension_audit/app.py", "--", json_args], start_new_session=True)
 
         finally:
             if os.path.exists(self.flow_path):
@@ -64,13 +107,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-"""
-TODO:
-2. get argparse to work extension_audit --extnension_name --gui
-3. remove changing wi-fi
-4. better gui using js
-5. temp file
-5. better payload viewing
-"""

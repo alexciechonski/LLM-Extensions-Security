@@ -3,6 +3,7 @@ from collections import defaultdict
 import json
 from mitmproxy.io import FlowReader
 from mitmproxy.http import HTTPFlow
+import math
 
 class NetworkAnalyzer():
     def __init__(
@@ -82,30 +83,33 @@ class NetworkAnalyzer():
                         res[key] = val
             except AttributeError:
                 bad.append(payload)
-        # with open('src/bad_payloads.json', 'w') as f:
-        #     json.dump(bad, f, indent=2)
         return res
 
+    def get_wss_payloads(self, party, domains = {}):
+        df = self.network[self.network['contacted_party'] == f'{party}-party']
+        if domains:
+            df = df[df['request_domain'].isin(domains)]
+        wss_payloads = df['payload'].tolist()
+        return wss_payloads
+
+    @staticmethod
+    def clean_list(lst):
+        return [x for x in lst if not (isinstance(x, float) and math.isnan(x))]
 
     def run(self):
-        first_parties = self.get_party('first')
-        third_parties = self.get_party('third')
+        first_parties, third_parties = self.get_party('first'), self.get_party('third')
+        fp_wss, tp_wss = self.clean_list(self.get_wss_payloads('first')), self.clean_list(self.get_wss_payloads('third', domains=third_parties))
         fp_payloads = [self.combine_payloads(self.get_all_payloads(endpoint)) for endpoint in first_parties]
         tp_payloads = [self.combine_payloads(self.get_all_payloads(endpoint)) for endpoint in third_parties]
+        if fp_wss:
+            fp_payloads.append({'wss':fp_wss})
+        if tp_wss:
+            tp_payloads.append({'wss':tp_wss})
         return fp_payloads, tp_payloads
 
 def main():
-    na = NetworkAnalyzer('max_test.csv', 'working.flow', "maxai")
+    na = NetworkAnalyzer('copilot_res.csv', 'copilot-lin-control.flow', "copilot")
     fp, tp = na.run()
-    print(any(na.network['contacted_party'] == 'third-party'))
-
+    print(fp)
 if __name__ == "__main__":
    main()
-
-"""
-TODO:
-1. create a cli tool
-2. fill out prompt.txt based on the paper
-3. get cookies function
-4. represent the output
-"""
